@@ -160,7 +160,7 @@ text-5xl font-heading mb-6 my-6 md:my-8 lg:my-10
 
 ```html
 <h1 class="hero-header-text">
-  We're Coding Clubhouse.
+  We're The Coding Clubhouse.
 </h1>
 ```
 

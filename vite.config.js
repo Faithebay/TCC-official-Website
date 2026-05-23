@@ -22,6 +22,7 @@ export default defineConfig({
         about: resolve(__dirname, 'about.html'),
         contact: resolve(__dirname, 'contact.html'),
         programs: resolve(__dirname, 'programs.html'),
+        impact: resolve(__dirname, 'impact.html'),
       }
     }
   },
