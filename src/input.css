@@ -53,9 +53,17 @@
            p-1.5 px-4 py-2 rounded-md;
   }
 
-  /* BUTTONS */
+  /* =========================
+   BUTTON SYSTEM (CLEAN)
+  ========================= */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  /* Primary CTA (yellow) */
   .btn-primary {
-    @apply text-brand-white px-6 py-3 rounded-lg text-sm;
+    @apply btn bg-brand-yellow text-brand-charcoal px-6 py-3 text-sm;
   }
 
   .btn-primary:hover,
@@ -63,8 +71,9 @@
     @apply bg-brand-white text-black;
   }
 
+  /* Secondary CTA (white / outline style) */
   .btn-secondary {
-    @apply text-brand-charcoal px-10 py-6 rounded-md text-sm border-2 border-brand-gray;
+    @apply btn bg-brand-white text-brand-charcoal border-2 border-brand-purple px-6 py-3 text-sm;
   }
 
   .btn-secondary:hover,
@@ -72,12 +81,18 @@
     @apply bg-brand-purple text-white;
   }
 
+  /* Outline button (used for Learn More etc.) */
   .btn-outline {
-    @apply text-brand-white px-4 py-2 rounded-lg text-sm border-2 border-brand-purple;
+    @apply btn bg-transparent text-brand-charcoal border-2 border-brand-purple px-4 py-2 text-sm;
   }
 
   .btn-outline:hover {
     @apply bg-brand-purple text-white;
+  }
+
+  /* Icon inside buttons (standardized) */
+  .btn-icon {
+    @apply w-4 h-4 shrink-0;
   }
 
   /* INFO */
@@ -263,24 +278,6 @@
    DESKTOP ONLY
 ========================= */
 
-@media (min-width: 768px) {
-
-  .desktop-only {
-    @apply hidden absolute top-full left-0 mt-2
-           bg-white text-brand-charcoal
-           rounded-lg shadow-lg
-           min-w-[220px] p-3 z-50;
-  }
-
-  .programs:hover .desktop-only {
-    @apply flex flex-col;
-  }
-
-  .programs:hover .programs-chevron {
-    transform: rotate(180deg);
-  }
-}
-
   /* FOOTER */
   .footer-container {
     @apply bg-brand-white text-brand-charcoal w-full px-10 pt-20;
@@ -288,5 +285,83 @@
 
   .copyright {
     @apply text-gray-400 text-sm text-center py-5;
+  }
+
+  .footer-top {
+    @apply flex flex-col gap-10 md:flex-row md:justify-between md:items-start;
+  }
+
+  .footer-webpages-link {
+    @apply flex flex-wrap gap-3 text-sm font-bold py-5;
+  }
+
+  .media-icons {
+    @apply flex justify-center md:justify-start gap-6;
+  }
+
+  .newsletter {
+    @apply flex flex-col md:flex-row md:items-center gap-3 my-10;
+  }
+  
+  /* =========================
+   IMPACT SECTION
+========================= */
+
+  .impact-card-background {
+    @apply text-center bg-brand-purple bg-cover bg-blend-soft-light shadow-xl rounded-lg mx-8 md:mx-20 mt-20 mb-2 p-8;
+  }
+
+  .impact-card-h1 {
+    @apply font-bold text-xl md:text-3xl text-brand-charcoal font-heading;
+  }
+
+  .tiny-codes-snippet {
+    @apply text-right text-sm flex justify-end text-brand-blue mb-10;
+  }
+
+  /* =========================
+    CARDS
+  ========================= */
+
+  .intro-cards-container {
+    @apply m-10 text-brand-charcoal block md:flex gap-8;
+  }
+
+  .card-box-wrapper {
+    @apply grid md:grid-cols-2 gap-2 p-2;
+  }
+
+  .card-box {
+    @apply border-2 border-brand-gray p-2 rounded-xl;
+  }
+
+  .card-bg {
+    @apply mx-8 md:mx-20 mt-20 shadow-xl rounded-lg bg-brand-purple text-center;
+  }
+
+  .bg-circle {
+    @apply w-16 h-16 rounded-full bg-brand-purple50 absolute;
+  }
+
+
+  @media (min-width: 768px) {
+
+    .desktop-only {
+      @apply hidden absolute top-full left-0 mt-2
+            bg-white text-brand-charcoal
+            rounded-lg shadow-lg
+            min-w-[220px] p-3 z-50;
+    }
+
+    .programs:hover .desktop-only {
+      @apply flex flex-col;
+    }
+
+    .programs:hover .programs-chevron {
+      transform: rotate(180deg);
+    }
+      .footer-webpages-link {
+      @apply flex gap-6;
+    }
   }
 }

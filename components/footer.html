@@ -14,129 +14,129 @@
   --------------------------->
   <section>
     <div class="impact-card-background" style="background-image: url(/assets/Building-Blocks/blocks.jpg)">
+
       <h1 class="impact-card-h1">
         Want to help us expand our impact?
       </h1>
 
-      <div class="btn-container">
-        <button class="btn-primary bg-brand-yellow text-brand-charcoal mr-5 md:m-4">
-          <a href="#">
-            Become a Volunteer
-          </a>
-        </button>
-        <button class="btn-primary bg-brand-yellow text-brand-charcoal md:m-4">
-          <a href="#">
-            Partner with Us
-          </a>
-        </button> 
-        <button class="btn-primary bg-brand-white text-brand-charcoal mt-5 md:m-4 col-span-2">
-          <a href="#" class="btn-icon-wrapper">
-            <img 
-              src="/assets/icons/Heart.png"
-              alt="heart-icon"
-              class="w-6 h-6"
-            >
-            <p class="mt-2">Donate</p> 
-          </a>
-        </button>
+      <!-- BUTTONS -->
+      <div class="btn-container flex flex-col md:flex-row items-center justify-center gap-4 mt-6">
+
+        <!-- Volunteer -->
+        <a href="#"
+          class="btn-primary bg-brand-yellow text-brand-charcoal px-6 py-3 rounded-lg text-sm text-center">
+          Become a Volunteer
+        </a>
+
+        <!-- Partner -->
+        <a href="#"
+          class="btn-primary bg-brand-yellow text-brand-charcoal px-6 py-3 rounded-lg text-sm text-center">
+          Partner with Us
+        </a>
+
+        <!-- Donate (special button) -->
+        <a href="#"
+          class="btn-primary bg-brand-white text-brand-charcoal px-6 py-3 rounded-lg text-sm flex items-center justify-center gap-2">
+
+          <img
+            src="/assets/icons/Heart.png"
+            alt="heart icon"
+            class="w-5 h-5"
+          >
+
+          <span class="text-sm">Donate</span>
+
+        </a>
+
       </div>
+
     </div>
-    <span class="tiny-codes-snippet">function thecodeclubhouse</span>
+
+    <span class="tiny-codes-snippet">
+      function thecodeclubhouse
+    </span>
   </section>
  <!--------------------------
   Impact Section Ends
   --------------------------->
 
 
-<!-------------------------
-  Footer Begins
-------------------------->
+<!-- ================= FOOTER ================= -->
+<footer class="footer-container">
 
-<!--Link to webpages-->
-  <footer class="footer-container">
-    <div class="block md:flex gap-4 md:justify-evenly">
-      <a href="index.html">
-        <img 
-          class="w-32 h-auto" 
-          src="/assets/icons/Frame 2 (1).png" 
-          alt="NGO Logo"
+  <div class="container mx-auto">
+
+    <!-- TOP GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
+
+      <!-- LOGO -->
+      <div class="flex justify-center md:justify-start">
+        <a href="index.html">
+          <img
+            class="w-32 h-auto"
+            src="/assets/icons/Frame 2 (1).png"
+            alt="NGO Logo"
+          >
+        </a>
+      </div>
+
+      <!-- LINKS -->
+      <ul class="footer-webpages-link flex flex-wrap justify-center md:justify-start gap-4 text-sm font-bold">
+
+        <li><a class="hover:text-brand-purple" href="/about.html">About Us</a></li>
+        <li><a class="hover:text-brand-purple" href="#">Programs</a></li>
+        <li><a class="hover:text-brand-purple" href="#">Volunteer</a></li>
+        <li><a class="hover:text-brand-purple" href="#">Donate</a></li>
+        <li><a class="hover:text-brand-purple" href="#">Contact Us</a></li>
+        <li><a class="hover:text-brand-purple" href="components.html">Test component</a></li>
+
+      </ul>
+
+      <!-- SOCIAL ICONS -->
+      <ul class="media-icons flex justify-center md:justify-end gap-6">
+
+        <li><a href="#"><img src="/assets/icons/Animated Icon (3).png" alt="instagram"></a></li>
+        <li><a href="#"><img src="/assets/icons/Animated Icon (2).png" alt="facebook"></a></li>
+        <li><a href="#"><img src="/assets/icons/Animated Icon (1).png" alt="x"></a></li>
+        <li><a href="#"><img src="/assets/icons/Animated Icon.png" alt="youtube"></a></li>
+
+      </ul>
+
+    </div>
+
+    <!-- NEWSLETTER -->
+    <div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-4">
+
+      <h3 class="newsletter-h3 text-lg font-bold">Newsletter</h3>
+
+      <p class="text-brand-charcoal text-sm text-center md:text-left">
+        Get updates about our events and classes.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+
+        <input
+          type="email"
+          placeholder="Email Address"
+          class="btn-secondary w-full sm:w-64"
         >
-      </a>
-      
-      <ul  class="footer-webpages-link">
-        <li class="navbar-links">
-          <a href="/about.html">About Us</a>
-        </li>
 
-        <li class="navbar-links">
-          <a href="#">Programs</a>
-        </li>
+        <button class="btn-primary bg-brand-yellow text-brand-charcoal whitespace-nowrap">
+          Subscribe Now
+        </button>
 
-        <li class="navbar-links">
-          <a href="#">Volunteer</a>
-        </li>
+      </div>
 
-        <li class="navbar-links">
-          <a href="#">Donate</a>
-        </li>
-        
-        <li class="navbar-links">
-          <a href="#">Contact Us</a>
-        </li>
-
-        <li class="navbar-links">
-          <a href="components.html">Test component</a>
-        </li>
-      </ul>
-
-<!--Social Media Icons-->
-      <ul class="media-icons">
-        <li>
-          <a href="#" >
-            <img 
-              src="/assets/icons/Animated Icon (3).png" 
-              alt="instagram-icon"
-            >
-          </a>
-        </li>
-
-        <li>
-          <a href="#">
-            <img 
-              src="/assets/icons/Animated Icon (2).png" 
-              alt="facebook-icon"
-            >
-          </a>
-        </li>
-
-        <li>
-          <a href="#">
-            <img src="/assets/icons/Animated Icon (1).png" alt="x-icon">
-          </a>
-        </li>
-
-        <li>
-          <a href="#">
-            <img src="/assets/icons/Animated Icon.png" alt="youtube-icon">
-          </a>
-        </li>
-      </ul>
     </div>
 
-    <!--Newsletter Subscription-->
-    <div class="newsletter">
-      <h3 class="newsletter-h3">Newsletter</h3>
-      <span class="text-brand-charcoal mr-4">Get updates about our events and classes.</span>
-      <input type="text" name="email" class="btn-secondary mt-5 md:mt-0 mr-2" placeholder="Email Address">
-      <button class="btn-primary bg-brand-yellow text-brand-charcoal hover:text-brand-white my-4">Subscribe Now</button>
+    <!-- COPYRIGHT -->
+    <div class="text-center mt-10 pb-10 text-gray-400 text-sm">
+      © 2026 Coding Clubhouse. All rights reserved.
     </div>
 
-    <!--Copyright-->
-    <span class="copyright"> 
-      &copy; 2026 Coding Clubhouse. All rights reserved.
-    </span>
+  </div>
 
-    <!--Footer Ends-->
-  </footer>
+</footer>
+<!-- Footer Ends -->
 </body>
 </html>
