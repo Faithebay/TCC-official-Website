@@ -1,4 +1,5 @@
 // Loop Builder activity for Virtual Lego
+// Exposes switchActivity('stack'|'loop'), runActivity(), clearActivity()
 
 const LOOP_LEVELS = [
   {
@@ -30,6 +31,42 @@ const LOOP_LEVELS = [
 let loopWorkspace = null;
 let currentLoopLevel = 0;
 let loopCompleted = new Set();
+let currentActivity = 'stack'; // default
+
+function switchActivity(name) {
+  currentActivity = name;
+  document.getElementById('activity-stack').classList.toggle('active', name === 'stack');
+  document.getElementById('activity-loop').classList.toggle('active', name === 'loop');
+
+  // Dispose any existing workspace (either from stack activity or loop)
+  try { if (window.workspace) window.workspace.dispose(); } catch(e){}
+  try { if (loopWorkspace) loopWorkspace.dispose(); } catch(e){}
+
+  if (name === 'stack') {
+    // reload first stack level
+    if (typeof loadLevel === 'function') loadLevel(0);
+    document.querySelector('.mission').textContent = '🧱 Stack Builder — What Is Coding?';
+  } else {
+    // initialize loop activity UI
+    document.querySelector('.mission').textContent = '🔁 Loop Builder — Make repetition visible';
+    loadLoopLevel(0);
+  }
+}
+
+function runActivity() {
+  if (currentActivity === 'stack') {
+    if (typeof runCode === 'function') runCode();
+  } else {
+    loopRun();
+  }
+}
+function clearActivity() {
+  if (currentActivity === 'stack') {
+    if (typeof clearStack === 'function') clearStack();
+  } else {
+    loopClear();
+  }
+}
 
 // --- Blockly block definitions for loop builder ---
 function registerLoopBlocks(colors) {
@@ -63,7 +100,8 @@ function registerLoopBlocks(colors) {
     "helpUrl": ""
   };
 
-  Blockly.defineBlocksWithJsonArray([placeBlock, repeatBlock]);
+  if (!Blockly.Blocks["place_brick"])  Blockly.defineBlocksWithJsonArray([placeBlock]);
+  if (!Blockly.Blocks["repeat_block"]) Blockly.defineBlocksWithJsonArray([repeatBlock]);
 }
 
 function buildLoopToolbox(colors) {
@@ -149,8 +187,7 @@ function loadLoopLevel(idx) {
 
   const updateLoopPreview = () => {
     const seq = evaluateWorkspaceSequence(loopWorkspace);
-    const bst = seq.slice().reverse();
-    renderMyStack(bst, LOOP_LEVELS[currentLoopLevel].target || []);
+    renderMyStack(seq, LOOP_LEVELS[currentLoopLevel].target || []);
     const count = loopWorkspace.getAllBlocks(false).length;
     const el = document.getElementById('block-count');
     if (el) {
@@ -255,4 +292,3 @@ function loopClear() {
   document.getElementById('block-count').textContent = '0';
   const existing = document.getElementById('free-controls'); if (existing) existing.remove();
 }
-
