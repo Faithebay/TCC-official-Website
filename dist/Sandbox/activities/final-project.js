@@ -93,11 +93,7 @@ function buildFPToolbox() {
 
 /* Called by switchActivity when entering Day 5 for the first time */
 function setupFPWorkspace() {
-  try { if (fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; } } catch(e){}
-  try { if (typeof workspace !== 'undefined' && workspace) { workspace.dispose(); workspace = null; } } catch(e){}
-  try { if (typeof loopWorkspace !== 'undefined' && loopWorkspace) { loopWorkspace.dispose(); loopWorkspace = null; } } catch(e){}
-  try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
-  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
+  if (fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; }
 
   fpWorkspace = Blockly.inject('blocklyDiv', {
     toolbox: buildFPToolbox(),

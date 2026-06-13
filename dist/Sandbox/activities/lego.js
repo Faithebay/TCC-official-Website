@@ -58,11 +58,6 @@ function loadLevel(idx) {
     workspace.dispose();
     workspace = null;
   }
-  // Dispose other activity workspaces if switching from Day 2-5
-  try { if (typeof loopWorkspace !== 'undefined' && loopWorkspace) { loopWorkspace.dispose(); loopWorkspace = null; } } catch(e){}
-  try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
-  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
-  try { if (typeof fpWorkspace !== 'undefined' && fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; } } catch(e){}
 
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: buildToolbox(lvl.colors),

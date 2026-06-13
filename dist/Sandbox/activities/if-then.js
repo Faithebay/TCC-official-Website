@@ -34,7 +34,6 @@ const IF_LEVELS = [
 
 let ifWorkspace = null;
 let compiledRules = {};
-let testedLights = new Set();
 
 function registerIfBlocks(colors, reactions) {
   Blockly.Blocks['if_light_rule'] = {
@@ -61,16 +60,11 @@ function loadIfLevel(idx) {
   hideFeedback();
 
   compiledRules = {};
-  testedLights.clear();
   seResetReactionScreen();
   renderBulbs(lvl.bulbs, lvl.activeBulbs);
   registerIfBlocks(lvl.bulbs, lvl.reactions);
 
-  try { if (ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
-  try { if (typeof workspace !== 'undefined' && workspace) { workspace.dispose(); workspace = null; } } catch(e){}
-  try { if (typeof loopWorkspace !== 'undefined' && loopWorkspace) { loopWorkspace.dispose(); loopWorkspace = null; } } catch(e){}
-  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
-  try { if (typeof fpWorkspace !== 'undefined' && fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; } } catch(e){}
+  if (ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; }
 
   ifWorkspace = Blockly.inject('blocklyDiv', {
     toolbox: `<xml xmlns="https://developers.google.com/blockly/xml">
@@ -87,22 +81,6 @@ function loadIfLevel(idx) {
     const el = document.getElementById('if-block-count');
     if (el) el.textContent = String(ifWorkspace.getAllBlocks(false).length);
   });
-
-  try {
-    const toolbar = document.querySelector('#panel-ifthen .ws-toolbar');
-    if (toolbar && !document.getElementById('if-next-btn')) {
-      const nb = document.createElement('button');
-      nb.id = 'if-next-btn';
-      nb.className = 'btn btn-run';
-      nb.textContent = 'Next Level →';
-      nb.style.display = 'none';
-      nb.style.marginLeft = '8px';
-      nb.onclick = () => nextLevel();
-      toolbar.appendChild(nb);
-    }
-    const existingBtn = document.getElementById('if-next-btn');
-    if (existingBtn) existingBtn.style.display = 'none';
-  } catch(e) {}
 
   updateProgress();
 }
@@ -139,6 +117,15 @@ function runIfCode() {
     .forEach(b => { b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 300); });
 
   showFeedback('success', `✅ ${count} rule${count !== 1 ? 's' : ''} loaded! Now click a light to test.`);
+
+  if (currentLevel < 3) {
+    const covered = lvl.activeBulbs.filter(c => compiledRules[c]);
+    if (covered.length === lvl.activeBulbs.length) {
+      completedLevels.add(currentLevel);
+      updateProgress();
+      setTimeout(() => showCelebration(currentLevel, lvl), 800);
+    }
+  }
 }
 
 function testLight(color) {
@@ -156,24 +143,14 @@ function testLight(color) {
   seShowReaction(r.emoji, r.label, `Rule fired: IF ${color.toUpperCase()} → ${reaction}`, r.color);
   hideFeedback();
 
-  try {
-    const lvl = IF_LEVELS[currentLevel];
-    if (lvl.activeBulbs.includes(color) && compiledRules[color]) {
-      testedLights.add(color);
-    }
-    const testedAll = lvl.activeBulbs.every(c => testedLights.has(c));
-    const allHaveRule = lvl.activeBulbs.every(c => compiledRules[c]);
-    if (testedAll && allHaveRule && !completedLevels.has(currentLevel)) {
-      completedLevels.add(currentLevel);
+  if (currentLevel === 3) {
+    const covered = IF_LEVELS[3].activeBulbs.filter(c => compiledRules[c]);
+    if (covered.length === IF_LEVELS[3].activeBulbs.length) {
+      completedLevels.add(3);
       updateProgress();
-      setTimeout(() => {
-        showCelebration(currentLevel, lvl);
-        setTimeout(() => nextLevel(), 1800);
-      }, 800);
-      const btn = document.getElementById('if-next-btn');
-      if (btn) btn.style.display = 'inline-block';
+      setTimeout(() => showCelebration(3, IF_LEVELS[3]), 1000);
     }
-  } catch (e) {}
+  }
 }
 
 function clearIfCode() {

@@ -16,6 +16,8 @@ const ANIM_LEVELS = [
 ];
 
 let animWorkspace = null;
+let animCompleted = new Set();
+let testedKeys = new Set();
 
 function loadAnimLevel(idx) {
   currentLevel = idx;
@@ -32,6 +34,7 @@ function loadAnimLevel(idx) {
   seClearLog('Press Run then click a button to animate!');
 
   seRegisterActionBlocks('anim_');
+  // Dispose other activities' workspaces to avoid multiple workspaces sharing #blocklyDiv
   try { if (animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
   try { if (typeof workspace !== 'undefined' && workspace) { workspace.dispose(); workspace = null; } } catch(e){}
   try { if (typeof loopWorkspace !== 'undefined' && loopWorkspace) { loopWorkspace.dispose(); loopWorkspace = null; } } catch(e){}
@@ -48,7 +51,28 @@ function loadAnimLevel(idx) {
   animWorkspace.addChangeListener(() => {
     const el = document.getElementById('anim-block-count');
     if (el) el.textContent = String(animWorkspace.getAllBlocks(false).length);
+    // reset tested keys and hide next button when workspace changes
+    testedKeys.clear();
+    const btn = document.getElementById('anim-next-btn');
+    if (btn) btn.style.display = 'none';
   });
+
+  // create Next Level button (hidden) in the ws-toolbar so users can advance after testing
+  try {
+    const toolbar = document.querySelector('#panel-anim .ws-toolbar');
+    if (toolbar && !document.getElementById('anim-next-btn')) {
+      const nb = document.createElement('button');
+      nb.id = 'anim-next-btn';
+      nb.className = 'btn btn-run';
+      nb.textContent = 'Next Level →';
+      nb.style.display = 'none';
+      nb.style.marginLeft = '8px';
+      nb.onclick = () => nextLevel();
+      toolbar.appendChild(nb);
+    }
+    const existingBtn = document.getElementById('anim-next-btn');
+    if (existingBtn) existingBtn.style.display = 'none';
+  } catch(e) {}
 
   updateProgress();
 }
@@ -81,6 +105,11 @@ function runAnimCode() {
     seIsRunning = false;
     return;
   }
+  // reset tested keys when running so user must test after code changes
+  testedKeys.clear();
+  const btn = document.getElementById('anim-next-btn');
+  if (btn) btn.style.display = 'none';
+
   seIsRunning = true;
   showFeedback('success', `✅ ${count} event${count !== 1 ? 's' : ''} programmed! Click the buttons to test.`);
   seLog(`▶ Running — ${count} event(s) active`);
@@ -89,12 +118,23 @@ function runAnimCode() {
 function seOnKeyFired(key) {
   if (currentActivity !== 'anim') return;
   const lvl = ANIM_LEVELS[currentLevel];
-  if (lvl.keys.every(k => seEventMap[k]) && !completedLevels.has(currentLevel)) {
-    completedLevels.add(currentLevel);
+  // if no event defined for this key, nothing to test
+  if (!seEventMap[key]) return;
+  // mark this key as tested
+  testedKeys.add(key);
+
+  // If user has tested all required keys and all have event handlers, show next button
+  const allHaveHandler = lvl.keys.every(k => seEventMap[k]);
+  const allTested = lvl.keys.every(k => testedKeys.has(k));
+  if (allHaveHandler && allTested && !animCompleted.has(currentLevel)) {
+    animCompleted.add(currentLevel);
     updateProgress();
+    // show Next Level button and celebration; do NOT auto-advance immediately
+    const btn = document.getElementById('anim-next-btn');
+    if (btn) btn.style.display = 'inline-block';
     setTimeout(() => {
       showCelebration(currentLevel, lvl);
-      setTimeout(() => nextLevel(), 1800);
+      // do NOT call nextLevel() automatically so user can test manually
     }, 800);
   }
 }

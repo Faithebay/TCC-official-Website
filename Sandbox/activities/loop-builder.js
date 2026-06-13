@@ -35,37 +35,111 @@ let currentActivity = 'stack'; // default
 
 function switchActivity(name) {
   currentActivity = name;
+  currentLevel = 0; // Reset to first level when switching activities
+  
   document.getElementById('activity-stack').classList.toggle('active', name === 'stack');
   document.getElementById('activity-loop').classList.toggle('active', name === 'loop');
+  document.getElementById('activity-if').classList.toggle('active', name === 'if');
+  document.getElementById('activity-anim').classList.toggle('active', name === 'anim');
+  document.getElementById('activity-fp').classList.toggle('active', name === 'fp');
 
-  // Dispose any existing workspace (either from stack activity or loop)
+  // ┌─ CRITICAL: Clear Blockly workspace div BEFORE disposing ─┐
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  if (blocklyDiv) {
+    blocklyDiv.innerHTML = '';
+  }
+
+  // Dispose all workspaces to avoid conflicts
   try { if (window.workspace) window.workspace.dispose(); } catch(e){}
   try { if (loopWorkspace) loopWorkspace.dispose(); } catch(e){}
+  try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) ifWorkspace.dispose(); } catch(e){}
+  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) animWorkspace.dispose(); } catch(e){}
+  try { if (typeof fpWorkspace !== 'undefined' && fpWorkspace) fpWorkspace.dispose(); } catch(e){}
+
+  // Hide all panels
+  const allPanels = ['panel-stack-loop', 'panel-if', 'panel-anim', 'panel-fp'];
+  allPanels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+    }
+  });
 
   if (name === 'stack') {
-    // reload first stack level
     if (typeof loadLevel === 'function') loadLevel(0);
     document.querySelector('.mission').textContent = '🧱 Stack Builder — What Is Coding?';
-  } else {
-    // initialize loop activity UI
+    const panel = document.getElementById('panel-stack-loop');
+    if (panel) {
+      panel.style.display = 'block';
+    }
+  } else if (name === 'loop') {
     document.querySelector('.mission').textContent = '🔁 Loop Builder — Make repetition visible';
     loadLoopLevel(0);
+    const panel = document.getElementById('panel-stack-loop');
+    if (panel) {
+      panel.style.display = 'block';
+    }
+  } else if (name === 'if') {
+    document.querySelector('.mission').textContent = '🚦 If-Then Builder — Logic Rules';
+    if (typeof loadIfLevel === 'function') loadIfLevel(0);
+    const panel = document.getElementById('panel-if');
+    if (panel) {
+      panel.style.display = 'block';
+    }
+  } else if (name === 'anim') {
+    document.querySelector('.mission').textContent = '🎬 Story Animator — Interactive Events';
+    if (typeof loadAnimLevel === 'function') loadAnimLevel(0);
+    const panel = document.getElementById('panel-anim');
+    if (panel) {
+      panel.style.display = 'block';
+    }
+  } else if (name === 'fp') {
+    document.querySelector('.mission').textContent = '🎨 Free Project — Build Anything!';
+    currentLevel = 0;  // Free project has no levels but set for consistency
+    if (typeof setupFPWorkspace === 'function') setupFPWorkspace();
+    const panel = document.getElementById('panel-fp');
+    if (panel) {
+      panel.style.display = 'block';
+    }
   }
+  
+  // Update level buttons after panel is shown
+  setTimeout(updateLevelButtons, 50);
 }
 
 function runActivity() {
   if (currentActivity === 'stack') {
     if (typeof runCode === 'function') runCode();
-  } else {
+  } else if (currentActivity === 'loop') {
     loopRun();
+  } else if (currentActivity === 'if') {
+    if (typeof runIfCode === 'function') runIfCode();
+  } else if (currentActivity === 'anim') {
+    if (typeof runAnimCode === 'function') runAnimCode();
+  } else if (currentActivity === 'fp') {
+    if (typeof runFP === 'function') runFP();
   }
 }
 function clearActivity() {
   if (currentActivity === 'stack') {
     if (typeof clearStack === 'function') clearStack();
-  } else {
+  } else if (currentActivity === 'loop') {
     loopClear();
+  } else if (currentActivity === 'if') {
+    if (typeof clearIfCode === 'function') clearIfCode();
+  } else if (currentActivity === 'anim') {
+    if (typeof clearAnimCode === 'function') clearAnimCode();
+  } else if (currentActivity === 'fp') {
+    if (typeof clearFP === 'function') clearFP();
   }
+}
+
+/* ── Update level button styling to reflect currentLevel ── */
+function updateLevelButtons() {
+  const btns = document.querySelectorAll('.levels .level-btn');
+  btns.forEach((btn, idx) => {
+    btn.classList.toggle('active', idx === currentLevel);
+  });
 }
 
 // --- Blockly block definitions for loop builder ---
@@ -145,12 +219,15 @@ function evaluateWorkspaceSequence(ws) {
   top.sort((a,b) => a.getRelativeToSurfaceXY().y - b.getRelativeToSurfaceXY().y);
   const result = [];
   top.forEach(tb => result.push(...evaluateSequenceFromBlock(tb)));
-  return result;
+  // ┌─ CRITICAL: Reverse so index 0 = bottom brick (matching LOOP_LEVELS targets) ─┐
+  // Blockly UI shows blocks top-to-bottom, but we need bottom-to-top array order
+  return result.reverse();
 }
 
 // --- Level loading ---
 function loadLoopLevel(idx) {
-  currentLoopLevel = idx;
+  currentLevel = idx;  // Use consistent global for all activities
+  currentLoopLevel = idx;  // Also keep for backward compatibility
   const lvl = LOOP_LEVELS[idx];
   document.querySelectorAll('.levels .level-btn').forEach((b,i)=> b.classList.toggle('active', i===idx));
   document.getElementById('goal-text').textContent = lvl.goal + '\n\nFacilitator prompt: "Did your loop produce the same stack as placing each brick one by one? So why would a programmer choose the loop?"';
@@ -162,12 +239,13 @@ function loadLoopLevel(idx) {
   const colors = ['red','blue','yellow','green','orange','purple','pink','white'];
   registerLoopBlocks(colors);
 
-  try { if (loopWorkspace) loopWorkspace.dispose(); loopWorkspace = null; } catch(e){}
-  // dispose stack workspace if present (Day 1 activity)
-  try { if (typeof workspace !== 'undefined' && workspace) { workspace.dispose(); workspace = null; } } catch(e){}
-  try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
-  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
-  try { if (typeof fpWorkspace !== 'undefined' && fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; } } catch(e){}
+  // ┌─ CRITICAL: Clear blocklyDiv before injecting new workspace ─┐
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  if (blocklyDiv) blocklyDiv.innerHTML = '';
+
+  try { if (loopWorkspace) loopWorkspace.dispose(); } catch(e){}
+  // dispose global workspace if present (stack activity)
+  try { if (window.workspace) window.workspace.dispose(); } catch(e){}
 
   loopWorkspace = Blockly.inject('blocklyDiv', {
     toolbox: buildLoopToolbox(colors),
@@ -280,6 +358,7 @@ function loopRun() {
     setTimeout(() => showCelebration(currentLoopLevel, lvl), 700);
   } else if (stack.length !== lvl.target.length) {
     showFeedback('error', `Not matching the target. Your output has ${stack.length} bricks but the target needs ${lvl.target.length}.`);
+    setTimeout(() => showCelebration(currentLoopLevel, lvl), 700);
   } else {
     const wrongs = stack.filter((c,i)=>c !== lvl.target[i]).length;
     showFeedback('error', `Not matching the target. ${wrongs} brick${wrongs !== 1 ? 's are' : ' is'} in the wrong position.`);
@@ -291,4 +370,35 @@ function loopClear() {
   renderMyStack([], LOOP_LEVELS[currentLoopLevel].target || []);
   document.getElementById('block-count').textContent = '0';
   const existing = document.getElementById('free-controls'); if (existing) existing.remove();
+}
+
+/* ── Dispatcher for level loading (handles all activities) ── */
+function loadActivityLevel(idx) {
+  currentLevel = idx; // Track which level we're on
+  updateLevelButtons(); // Update button styling
+  
+  if (currentActivity === 'stack') {
+    if (typeof loadLevel === 'function') loadLevel(idx);
+  } else if (currentActivity === 'loop') {
+    if (typeof loadLoopLevel === 'function') loadLoopLevel(idx);
+  } else if (currentActivity === 'if') {
+    if (typeof loadIfLevel === 'function') loadIfLevel(idx);
+  } else if (currentActivity === 'anim') {
+    if (typeof loadAnimLevel === 'function') loadAnimLevel(idx);
+  } else if (currentActivity === 'fp') {
+    // Free project has no traditional levels, but reset if needed
+    if (typeof setupFPWorkspace === 'function') setupFPWorkspace();
+  }
+}
+
+/* ── Advance to next level (used by all activities) ── */
+function nextLevel() {
+  const levels = currentActivity === 'stack' ? LEVELS : currentActivity === 'loop' ? LOOP_LEVELS : currentActivity === 'if' ? IF_LEVELS : currentActivity === 'anim' ? ANIM_LEVELS : [];
+  if (!levels || !levels.length) return;
+  const nextIdx = currentLevel + 1;
+  if (nextIdx >= levels.length) {
+    showFeedback('success', '🎉 You completed all levels for this activity!');
+    return;
+  }
+  loadActivityLevel(nextIdx);
 }

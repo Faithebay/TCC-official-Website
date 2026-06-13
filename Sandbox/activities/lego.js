@@ -54,6 +54,10 @@ function loadLevel(idx) {
 
   registerBlocks(lvl.colors);
 
+  // ┌─ CRITICAL: Clear blocklyDiv before injecting new workspace ─┐
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  if (blocklyDiv) blocklyDiv.innerHTML = '';
+
   if (workspace) {
     workspace.dispose();
     workspace = null;
@@ -173,6 +177,15 @@ function clearStack() {
   renderTargetStack(lvl.target || []);
   renderMyStack([], lvl.target);
   hideFeedback();
+}
+
+/* Advance to next level in Day 1 (Stack Builder) */
+function nextLevel() {
+  if (currentLevel < LEVELS.length - 1) {
+    loadLevel(currentLevel + 1);
+  } else {
+    showFeedback('success', '🎉 You completed all Stack Builder levels!');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

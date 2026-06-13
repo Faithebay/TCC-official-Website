@@ -100,6 +100,10 @@ function setupFPWorkspace() {
   try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
   try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
 
+  // ┌─ CRITICAL: Clear blocklyDiv before injecting new workspace ─┐
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  if (blocklyDiv) blocklyDiv.innerHTML = '';
+
   fpWorkspace = Blockly.inject('blocklyDiv', {
     toolbox: buildFPToolbox(),
     scrollbars: true, trashcan: true,

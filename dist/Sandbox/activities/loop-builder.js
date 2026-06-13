@@ -1,4 +1,5 @@
 // Loop Builder activity for Virtual Lego
+// Exposes switchActivity('stack'|'loop'), runActivity(), clearActivity()
 
 const LOOP_LEVELS = [
   {
@@ -30,19 +31,53 @@ const LOOP_LEVELS = [
 let loopWorkspace = null;
 let currentLoopLevel = 0;
 let loopCompleted = new Set();
+let currentActivity = 'stack'; // default
+
+function switchActivity(name) {
+  currentActivity = name;
+  document.getElementById('activity-stack').classList.toggle('active', name === 'stack');
+  document.getElementById('activity-loop').classList.toggle('active', name === 'loop');
+
+  // Dispose any existing workspace (either from stack activity or loop)
+  try { if (window.workspace) window.workspace.dispose(); } catch(e){}
+  try { if (loopWorkspace) loopWorkspace.dispose(); } catch(e){}
+
+  if (name === 'stack') {
+    // reload first stack level
+    if (typeof loadLevel === 'function') loadLevel(0);
+    document.querySelector('.mission').textContent = '🧱 Stack Builder — What Is Coding?';
+  } else {
+    // initialize loop activity UI
+    document.querySelector('.mission').textContent = '🔁 Loop Builder — Make repetition visible';
+    loadLoopLevel(0);
+  }
+}
+
+function runActivity() {
+  if (currentActivity === 'stack') {
+    if (typeof runCode === 'function') runCode();
+  } else {
+    loopRun();
+  }
+}
+function clearActivity() {
+  if (currentActivity === 'stack') {
+    if (typeof clearStack === 'function') clearStack();
+  } else {
+    loopClear();
+  }
+}
 
 // --- Blockly block definitions for loop builder ---
 function registerLoopBlocks(colors) {
-  if (Blockly.Blocks['place_brick'] && Blockly.Blocks['repeat_block']) return;
-
   const placeBlock = {
     "type": "place_brick",
     "message0": "place %1 brick",
     "args0": [
       { "type": "field_dropdown", "name": "COLOR", "options": colors.map(c => [c, c]) }
     ],
-    "previousStatement": "Brick",
-    "nextStatement": "Brick",
+    "previousStatement": null,
+    "nextStatement": null,
     "colour": 230,
     "tooltip": "Place a brick of the chosen colour",
     "helpUrl": ""
@@ -54,22 +89,23 @@ function registerLoopBlocks(colors) {
     "args0": [
       { "type": "field_number", "name": "TIMES", "value": 2, "min": 1, "precision": 1 },
       { "type": "input_dummy" },
-      { "type": "input_statement", "name": "DO", "check": "Brick" }
+      { "type": "input_statement", "name": "DO" }
     ],
-    "previousStatement": "Brick",
-    "nextStatement": "Brick",
+    "previousStatement": null,
+    "nextStatement": null,
     "colour": 120,
     "tooltip": "Repeat the bricks inside",
     "helpUrl": ""
   };
 
-  Blockly.defineBlocksWithJsonArray([placeBlock, repeatBlock]);
+  if (!Blockly.Blocks["place_brick"])  Blockly.defineBlocksWithJsonArray([placeBlock]);
+  if (!Blockly.Blocks["repeat_block"]) Blockly.defineBlocksWithJsonArray([repeatBlock]);
 }
 
 function buildLoopToolbox(colors) {
   // simple xml toolbox
   const xmlParts = [
-    '<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">',
+    '<xml id="toolbox" style="display: none">',
     '  <category name="Loops" colour="#5BA58C">',
     '    <block type="repeat_block"><field name="TIMES">3</field></block>',
     '  </category>',
@@ -89,12 +125,33 @@ function evaluateSequenceFromBlock(startBlock) {
   let b = startBlock;
   while (b) {
     if (b.type === 'place_brick') {
-      out.push(b.getFieldValue('COLOR'));
+      const col = b.getFieldValue('COLOR');
+      out.push(col);
     } else if (b.type === 'repeat_block') {
       const times = Number(b.getFieldValue('TIMES')) || 1;
       const inner = b.getInputTargetBlock('DO');
-      const innerSeq = inner ? evaluateSequenceFromBlock(inner) : [];
-      for (let t = 0; t < times; t++) out.push(...innerSeq);
+      // collect inner sequence
+      const innerSeq = [];
+      let ib = inner;
+      while (ib) {
+        if (ib.type === 'place_brick') innerSeq.push(ib.getFieldValue('COLOR'));
+        else if (ib.type === 'repeat_block') {
+          // nested repeat: recursively evaluate one cycle and then repeat
+          const nested = evaluateSequenceFromBlock(ib);
+          // evaluateSequenceFromBlock will return full tail including following blocks; to avoid duplication we only want inner of this nested block
+          // simpler approach: call evaluateBlock to get values for this nested block only
+          // but for now, support simple nested usage by recursion on ib's DO
+          const nestedInner = [];
+          let nib = ib.getInputTargetBlock('DO');
+          while (nib) {
+            if (nib.type === 'place_brick') nestedInner.push(nib.getFieldValue('COLOR'));
+            nib = nib.getNextBlock();
+          }
+          for (let k=0;k<Number(ib.getFieldValue('TIMES')||1);k++) nestedInner.forEach(c=>innerSeq.push(c));
+        }
+        ib = ib.getNextBlock();
+      }
+      for (let t=0;t<times;t++) innerSeq.forEach(c=>out.push(c));
     }
     b = b.getNextBlock();
   }
@@ -106,7 +163,11 @@ function evaluateWorkspaceSequence(ws) {
   // order top blocks by y position to ensure sequence
   top.sort((a,b) => a.getRelativeToSurfaceXY().y - b.getRelativeToSurfaceXY().y);
   const result = [];
-  top.forEach(tb => result.push(...evaluateSequenceFromBlock(tb)));
+  top.forEach(tb => {
+    // if tb has previous connection null, it's a sequence start
+    const seq = evaluateSequenceFromBlock(tb);
+    seq.forEach(c => result.push(c));
+  });
   return result;
 }
 
@@ -124,12 +185,9 @@ function loadLoopLevel(idx) {
   const colors = ['red','blue','yellow','green','orange','purple','pink','white'];
   registerLoopBlocks(colors);
 
-  try { if (loopWorkspace) loopWorkspace.dispose(); loopWorkspace = null; } catch(e){}
-  // dispose stack workspace if present (Day 1 activity)
-  try { if (typeof workspace !== 'undefined' && workspace) { workspace.dispose(); workspace = null; } } catch(e){}
-  try { if (typeof ifWorkspace !== 'undefined' && ifWorkspace) { ifWorkspace.dispose(); ifWorkspace = null; } } catch(e){}
-  try { if (typeof animWorkspace !== 'undefined' && animWorkspace) { animWorkspace.dispose(); animWorkspace = null; } } catch(e){}
-  try { if (typeof fpWorkspace !== 'undefined' && fpWorkspace) { fpWorkspace.dispose(); fpWorkspace = null; } } catch(e){}
+  try { if (loopWorkspace) loopWorkspace.dispose(); } catch(e){}
+  // dispose global workspace if present (stack activity)
+  try { if (window.workspace) window.workspace.dispose(); } catch(e){}
 
   loopWorkspace = Blockly.inject('blocklyDiv', {
     toolbox: buildLoopToolbox(colors),
@@ -149,8 +207,7 @@ function loadLoopLevel(idx) {
 
   const updateLoopPreview = () => {
     const seq = evaluateWorkspaceSequence(loopWorkspace);
-    const bst = seq.slice().reverse();
-    renderMyStack(bst, LOOP_LEVELS[currentLoopLevel].target || []);
+    renderMyStack(seq, LOOP_LEVELS[currentLoopLevel].target || []);
     const count = loopWorkspace.getAllBlocks(false).length;
     const el = document.getElementById('block-count');
     if (el) {
@@ -173,36 +230,19 @@ function loadLoopLevel(idx) {
       ctrl.style.marginTop = '8px';
       ctrl.style.display = 'flex';
       ctrl.style.flexDirection = 'column';
-      ctrl.style.background = '#0f3460';
-      ctrl.style.padding = '8px';
-      ctrl.style.borderRadius = '8px';
-      ctrl.style.border = '1px solid rgba(255,255,255,0.04)';
-      ctrl.style.color = '#ffffff';
       const row = document.createElement('div');
       row.style.display = 'flex'; row.style.gap='8px'; row.style.marginTop='8px';
-      row.style.flexWrap = 'wrap';
-      row.style.alignItems = 'center';
 
       const c1 = document.createElement('select'); c1.id='free-col-1';
       const c2 = document.createElement('select'); c2.id='free-col-2';
       ['red','blue','yellow','green','orange','purple','pink','white'].forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; c1.appendChild(o); const o2=o.cloneNode(true); c2.appendChild(o2); });
-      [c1, c2].forEach(s => {
-        s.style.background = '#16213e'; s.style.color = '#fff'; s.style.border = '1px solid rgba(255,255,255,0.06)';
-        s.style.padding = '6px 8px'; s.style.borderRadius = '6px';
-        s.style.minWidth = '96px'; s.style.maxWidth = '140px'; s.style.flex = '0 0 120px';
-      });
       const times = document.createElement('input'); times.type='number'; times.min=1; times.value=4; times.id='free-times'; times.style.width='64px';
-      times.style.background = '#16213e'; times.style.color = '#fff'; times.style.border = '1px solid rgba(255,255,255,0.06)'; times.style.padding = '6px'; times.style.borderRadius = '6px';
-      times.style.flex = '0 0 64px'; times.style.minWidth = '64px';
-      const apply = document.createElement('button'); apply.textContent='Set pattern'; apply.className='btn btn-run';
-      apply.style.flex = '0 0 auto'; apply.style.marginLeft = '6px'; apply.style.marginTop = '6px';
-      apply.onclick = ()=>{
+      const apply = document.createElement('button'); apply.textContent='Set pattern'; apply.className='btn btn-run'; apply.onclick = ()=>{
         const a=c1.value, b=c2.value, t = Math.max(1, Number(times.value)||1);
         const pattern = Array(t).fill([a,b]).flat();
         LOOP_LEVELS[3].target = pattern;
         LOOP_LEVELS[3].naiveBlocks = pattern.length;
         renderTargetStack(pattern);
-        try { if (typeof updateLoopPreview === 'function') updateLoopPreview(); } catch(e) { }
       };
       row.appendChild(c1); row.appendChild(c2); row.appendChild(times); row.appendChild(apply);
       ctrl.appendChild(row);
@@ -216,8 +256,7 @@ function loadLoopLevel(idx) {
 function loopRun() {
   const lvl = LOOP_LEVELS[currentLoopLevel];
   if (!loopWorkspace) { showFeedback('error', 'No workspace loaded.'); return; }
-  const output = evaluateWorkspaceSequence(loopWorkspace);
-  const stack = output.slice().reverse();
+  const stack = evaluateWorkspaceSequence(loopWorkspace);
   renderMyStack(stack, lvl.target);
 
   // update block count color
@@ -235,9 +274,7 @@ function loopRun() {
   if (correct) {
     showFeedback('success', '✅ Perfect match! Nice loop.');
     loopCompleted.add(currentLoopLevel);
-      try { completedLevels.add(currentLoopLevel); } catch (e) {}
-      if (typeof updateProgress === 'function') updateProgress();
-      setTimeout(() => showCelebration(currentLoopLevel, lvl), 700);
+    if (typeof updateProgress === 'function') updateProgress();
   } else {
     showFeedback('error', 'Not matching the target. Check your loop or bricks.');
   }
@@ -249,4 +286,3 @@ function loopClear() {
   document.getElementById('block-count').textContent = '0';
   const existing = document.getElementById('free-controls'); if (existing) existing.remove();
 }
-
