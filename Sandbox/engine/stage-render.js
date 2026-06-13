@@ -1,27 +1,66 @@
-// stage-render.js
+/* stage-render.js */
 
-export const StageRender = {
-  renderScene(scene) {
-    const el = document.getElementById("stage");
-    if (!el) return;
+import { StageCore } from "./stage-core.js";
 
-    el.innerHTML = "";
+const SE_COSTUMES = ['🧒','🧑','👧','🧙','🦸','🤖','🐱','🦊'];
 
-    scene.elements.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "sprite";
-      div.style.left = item.x + "px";
-      div.style.top = item.y + "px";
-      div.innerText = item.emoji || "🎮";
-      el.appendChild(div);
-    });
-  },
+const SE_BACKGROUNDS = [
+  { name:'City', cls:'bg-city' },
+  { name:'Forest', cls:'bg-forest' },
+  { name:'Space', cls:'bg-space' },
+  { name:'Beach', cls:'bg-beach' },
+  { name:'Home', cls:'bg-home' },
+];
 
-  updateCharacter(id, x, y) {
-    const el = document.querySelector(`[data-id="${id}"]`);
-    if (!el) return;
+export function renderStage() {
+  const char = document.getElementById('stage-character');
+  const screen = document.getElementById('stage-screen');
+  const bgLbl = document.getElementById('bg-label');
+  const speech = document.getElementById('stage-speech');
 
-    el.style.left = x + "px";
-    el.style.top = y + "px";
+  const state = StageCore.state;
+
+  if (char) {
+    char.textContent = SE_COSTUMES[state.costume];
+    char.style.left = state.charX + '%';
   }
-};
+
+  if (screen) {
+    screen.className = 'stage-screen ' + SE_BACKGROUNDS[state.bgIndex].cls;
+  }
+
+  if (bgLbl) bgLbl.textContent = SE_BACKGROUNDS[state.bgIndex].name;
+
+  if (speech) speech.classList.add('hidden');
+}
+
+/* Keys UI */
+export function renderKeys(SE_ALL_KEYS, SE_KEY_LABELS, handleKeyPress) {
+  const container = document.getElementById('stage-buttons');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  SE_ALL_KEYS.forEach(key => {
+    const btn = document.createElement('button');
+
+    btn.className = 'key-btn';
+    btn.dataset.key = key;
+    btn.textContent = SE_KEY_LABELS[key];
+
+    btn.addEventListener('click', () => handleKeyPress(key));
+
+    container.appendChild(btn);
+  });
+}
+
+/* Reaction UI */
+export function showReaction(emoji, label, hint, color) {
+  const e = document.getElementById('reaction-emoji');
+  const l = document.getElementById('reaction-label');
+  const h = document.getElementById('reaction-hint');
+
+  if (e) e.textContent = emoji;
+  if (l) { l.textContent = label; l.style.color = color || '#fff'; }
+  if (h) h.textContent = hint;
+}
