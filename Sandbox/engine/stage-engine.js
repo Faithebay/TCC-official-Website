@@ -1,26 +1,38 @@
-import { StageCore } from "./stage-core.js";
-import { StageRender } from "./stage-render.js";
-import { StageEvents } from "./stage-events.js";
-import { StageBlockly } from "./stage-blockly.js";
+/* stage-engine.js */
+
+import { StageCore } from "./engine/stage-core.js";
+import { renderStage, renderKeys } from "./engine/stage-render.js";
+import { handleKeyPress } from "./engine/stage-events.js";
+import { compileEvents } from "./engine/stage-blockly.js";
 
 export const StageEngine = {
-  init(workspace) {
+
+  init(workspace, config) {
     this.workspace = workspace;
+    this.config = config;
 
-    StageEvents.init();
-
-    console.log("Stage Engine initialized");
+    renderKeys(
+      config.SE_ALL_KEYS,
+      config.SE_KEY_LABELS,
+      handleKeyPress
+    );
   },
 
   run() {
-    StageCore.state.isRunning = true;
+    StageCore.isRunning = true;
 
-    StageBlockly.run(this.workspace);
+    compileEvents(
+      this.workspace,
+      this.config.prefix,
+      this.config.SE_MOVE_OPTIONS,
+      this.config.SE_SOUND_OPTIONS
+    );
 
-    StageRender.renderScene(StageCore.state.currentScene);
+    renderStage();
   },
 
   reset() {
     StageCore.reset();
+    renderStage();
   }
 };
